@@ -1,0 +1,29 @@
+name: vendor-crates
+on: [workflow_dispatch]
+
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      # ① 루트에 Cargo.lock 생성 (한 번만 해두면 재현성 유지)
+      - name: Generate workspace lockfile
+        run: cargo generate-lockfile
+
+      # ② 워크스페이스 전체 의존성 vendor
+      - name: Cargo vendor (workspace)
+        run: |
+          cargo vendor --locked --workspace --versioned-dirs vendor
+          tar -cJf vendor.tar.xz vendor .cargo/config.toml
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tokenizers-vendor
+          path: vendor.tar.xz
+          retention-days: 14
