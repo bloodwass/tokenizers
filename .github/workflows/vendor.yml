@@ -6,21 +6,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
 
-      # ① 루트에 Cargo.lock 생성 (한 번만 해두면 재현성 유지)
+      # 1️⃣ 루트에 Cargo.lock 생성 ― 없으면 --locked 가 무조건 실패
       - name: Generate workspace lockfile
-        run: cargo generate-lockfile
+        run: cargo generate-lockfile           # ← ★ 새로 추가
 
-      # ② 워크스페이스 전체 의존성 vendor
+      # 2️⃣ 워크스페이스 전체를 vendor ― cd bindings/python 삭제
       - name: Cargo vendor (workspace)
         run: |
-          cargo vendor --locked --workspace --versioned-dirs vendor
-          tar -cJf vendor.tar.xz vendor .cargo/config.toml
+          cargo vendor --locked --workspace --versioned-dirs vendor   # ← ★ 수정
+          tar -cJf vendor.tar.xz vendor .cargo/config.toml            #   (루트 기준)
 
       - uses: actions/upload-artifact@v4
         with:
